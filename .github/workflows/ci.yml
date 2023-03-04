@@ -1,0 +1,63 @@
+{
+  "name" : "Continuous Integration",
+  "on" : {
+    "push" : {
+      "paths" : [
+        "**.c",
+        "**.h",
+        "**.cpp",
+        "**.hpp",
+        "**.build",
+        "**.in",
+        "**.yml",
+        "**.gradle",
+        "CMakeLists.txt"
+      ]
+    },
+    "pull_request" : {
+      "paths" : [
+        "**.c",
+        "**.h",
+        "**.cpp",
+        "**.hpp",
+        "**.build",
+        "**.in",
+        "**.yml",
+        "**.gradle",
+        "CMakeLists.txt"
+      ]
+    }
+  },
+  "jobs" : {
+    "build-ubuntu" : {
+      "runs-on" : "ubuntu-20.04",
+      "timeout-minutes" : 20,
+      "steps" : [
+        {
+          "uses" : "actions/checkout@v2",
+          "with" : {
+            "submodules" : "recursive"
+          }
+        },
+        {
+          "name" : "set up JDK 19",
+          "uses" : "actions/setup-java@v2",
+          "with" : {
+            "java-version" : "19"
+          }
+        },
+        {
+          "name" : "build",
+          "run" : "./gradlew build"
+        },
+        {
+          "uses" : "actions/upload-artifact@master",
+          "with" : {
+            "name" : "habakiri-desktop",
+            "path" : "desktop/build/libs/habakiri.jar"
+          }
+        }
+      ]
+    }
+  }
+}

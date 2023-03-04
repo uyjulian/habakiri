@@ -1,0 +1,15 @@
+
+plugins {
+    id 'java'
+    id 'java-library'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs 'src'
+        }
+    }
+}
+
+sourceCompatibility = 1.8

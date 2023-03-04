@@ -1,0 +1,26 @@
+
+plugins {
+    id 'application'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs '../core/src'
+            srcDirs 'src'
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'jp.kirikiri.tvp2env.Main'
+    }
+}
+
+dependencies {
+    implementation project(':JOrbis')
+}
+
+archivesBaseName = 'habakiri'
+sourceCompatibility = 1.8
