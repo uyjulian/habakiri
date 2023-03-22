@@ -36,7 +36,6 @@ import jp.kirikiri.tjs2.BinaryStream;
 import jp.kirikiri.tjs2.StorageInterface;
 import jp.kirikiri.tjs2.TJSException;
 import jp.kirikiri.tjs2.TextWriteStreamInterface;
-import jp.kirikiri.tvp2.TVP;
 
 public class StorageIO implements StorageInterface {
 
@@ -52,7 +51,6 @@ public class StorageIO implements StorageInterface {
 
 	@Override
 	public BinaryStream createBinaryWriteStream( String name ) throws TJSException {
-		String filepath = TVP.DataPath + "/" + name;
-		return Storage.createStream( filepath, BinaryStream.WRITE );
+		return Storage.createStream( name, BinaryStream.WRITE );
 	}
 }

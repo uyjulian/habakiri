@@ -48,7 +48,6 @@ import jp.kirikiri.tjs2.BinaryStream;
 import jp.kirikiri.tjs2.Error;
 import jp.kirikiri.tjs2.TJSException;
 import jp.kirikiri.tvp2.msg.Message;
-import jp.kirikiri.tvp2.utils.Random;
 
 public class LocalFileStream extends BinaryStream {
 
@@ -59,7 +58,7 @@ public class LocalFileStream extends BinaryStream {
 	public LocalFileStream( final String origname, final String localname, int flag ) throws TJSException {
 		mFilePath = origname;
 		try {
-			File file = Storage.getCaseInsensitiveFile(localname);
+			File file = new File(localname);
 			int access = flag & ACCESS_MASK;
 			switch( access ) {
 			case READ:
@@ -106,17 +105,12 @@ public class LocalFileStream extends BinaryStream {
 		} catch (IOException e) {
 			Message.throwExceptionMessage( Message.CannotOpenStorage, origname );
 		}
-		// push current tick as an environment noise
-		Random.updateEnvironNoiseForTick();
 	}
 
 	protected void finalize() {
 		if( mRandomAccessFile != null ) {
 			close();
 		}
-		// push current tick as an environment noise
-		// (timing information from file accesses may be good noises)
-		//Random.updateEnvironNoiseForTick();
 	}
 	@Override
 	public long seek(long offset, int whence) throws TJSException {
@@ -249,12 +243,12 @@ public class LocalFileStream extends BinaryStream {
 
 	@Override
 	public InputStream getInputStream() {
-		return new BinaryInputStream(this);
+		return null;
 	}
 
 	@Override
 	public OutputStream getOutputStream() {
-		return new BinaryOutputStream(this);
+		return null;
 	}
 
 	@Override

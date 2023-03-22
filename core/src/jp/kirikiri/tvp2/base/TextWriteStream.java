@@ -41,9 +41,7 @@ import java.util.zip.Deflater;
 import jp.kirikiri.tjs2.BinaryStream;
 import jp.kirikiri.tjs2.TJSException;
 import jp.kirikiri.tjs2.TextWriteStreamInterface;
-import jp.kirikiri.tvp2.TVP;
 import jp.kirikiri.tvp2.msg.Message;
-import jp.kirikiri.tvp2.utils.DebugClass;
 
 public class TextWriteStream implements TextWriteStreamInterface {
     //private static final int COMPRESSION_BUFFER_SIZE = 1024 * 1024; // 1MB
@@ -146,8 +144,6 @@ public class TextWriteStream implements TextWriteStreamInterface {
 			try {
 				mCompressionBuffer = new byte[COMPRESSION_BUFFER_SIZE];
 			} catch( OutOfMemoryError e ) { // メモリ不足の場合コンパクト化とgcを実行して出来るだけメモリを空ける
-				DebugClass.addLog("Faild to allocate memory in Text write buffer. Force GC and try agian.");
-				TVP.EventManager.deliverCompactEvent(CompactEventCallbackInterface.COMPACT_LEVEL_MAX);
 				System.gc();
 
 				mCompressionBuffer = new byte[COMPRESSION_BUFFER_SIZE>>>2]; // 一度失敗したら半分にしてみる

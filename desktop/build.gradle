@@ -18,9 +18,5 @@ jar {
     }
 }
 
-dependencies {
-    implementation project(':JOrbis')
-}
-
 archivesBaseName = 'habakiri'
 sourceCompatibility = 1.8

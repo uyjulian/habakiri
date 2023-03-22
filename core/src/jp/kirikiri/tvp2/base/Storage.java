@@ -47,14 +47,11 @@ import jp.kirikiri.tjs2.BinaryStream;
 import jp.kirikiri.tjs2.Error;
 import jp.kirikiri.tjs2.LexBase;
 import jp.kirikiri.tjs2.TJSException;
-import jp.kirikiri.tvp2.TVP;
 import jp.kirikiri.tvp2.msg.Message;
-import jp.kirikiri.tvp2.utils.DebugClass;
 
 
 public class Storage {
 
-	public static final char ArchiveDelimiter = '>';
 	private static Inflater Decompresser;
 
 	public static final void initialize() {
@@ -64,137 +61,16 @@ public class Storage {
 		Decompresser = null;
 	}
 	public static boolean checkExistentLocalFile( final String name ) {
-		//File file = new File(name);
-		File file = getCaseInsensitiveFile(name);
+		File file = new File(name);
 		if( file.exists() ) {
 			if( file.isFile() ) {
 				return true;
 			}
 		}
-		/*
-		if( File.separatorChar == '/' ) {
-			// may be case sensitive
-			File parent = file.getParentFile();
-			if( parent != null ) {
-				if( parent.exists() ) {
-
-				}
-			}
-		}
-		*/
 		file = null;
 		return false;
 	}
-	/**
-	 * case insensitive でファイルを探す
-	 * TODO 既に見付かっているものはキャッシングして高速化した方がいい
-	 * @param name フルパスファイル名
-	 * @return 見付かったらその File 、なかったら null
-	 */
-	public static File getCaseInsensitiveFile( final String name ) {
-		if( File.separatorChar == '/' ) {
-			File fistcheck = new File(name); // まずはそのままの名前でチェック
-			if( fistcheck.exists() ) {
-				return fistcheck;
-			}
 
-			String[] path = name.split("/");
-			int preLength = 0;
-			final int count = path.length;
-			StringBuilder fullPath = new StringBuilder(name.length());
-			for( int i = 0; i < count; i++ ) {
-				if( path[i] != null && path[i].length() > 0 ) {
-					boolean isFile = i == (count-1);
-
-					fullPath.append('/');
-					fullPath.append(path[i]);
-					File tmp = new File( fullPath.toString() );
-					if( tmp.exists() != true ) { // 見付からないので、ファイルをリストアップしてcase insensitiveで比較
-						boolean isfound = false;
-						fullPath.delete(preLength, fullPath.length() );
-						if( fullPath.length() == 0 ) {
-							fullPath.append('/');
-						}
-						String fullpathstr = fullPath.toString();
-						tmp = new File( fullpathstr );
-						File[] files = tmp.listFiles();
-						final int filecount = files.length;
-						if( isFile != true ) {
-							for( int j = 0; j < filecount; j++ ) {
-								if( files[j].isDirectory() ) {
-									String filename = files[j].getName();
-									if( filename.equalsIgnoreCase(path[i]) ) {
-										if( fullPath.length() != 1 ) {
-											fullPath.append('/');
-											fullPath.append( filename );
-										} else {
-											fullPath.append( filename );
-										}
-										isfound = true;
-										break;
-									}
-								}
-							}
-						} else {
-							for( int j = 0; j < filecount; j++ ) {
-								if( files[j].isFile() ) {
-									String filename = files[j].getName();
-									if( filename.equalsIgnoreCase(path[i]) ) {
-										if( fullPath.length() != 1 ) {
-											fullPath.append('/');
-											fullPath.append( filename );
-										} else {
-											fullPath.append( filename );
-										}
-										isfound = true;
-										break;
-									}
-								}
-							}
-						}
-						if( isfound == false ) {
-							// 見付からなかった。途中まで比較した物はそのまま使い、残りはただ単に追加する
-							for( ; i < count; i++ ) {
-								fullPath.append('/');
-								fullPath.append(path[i]);
-							}
-							return new File(fullPath.toString());
-						}
-					}
-
-				}
-				preLength = fullPath.length();
-			}
-
-			return new File(fullPath.toString());
-		} else {
-			return new File(name);
-		}
-	}
-
-	public static String extractStorageExt( final String name ) {
-		// extract an extension from name.
-		// returned string will contain extension delimiter ( '.' ), except for
-		// missing extension of the input string.
-		// ( returns null string when input string does not have an extension )
-
-		final int slen = name.length();
-		int p = slen - 1;
-		while( p >= 0 ){
-			char c = name.charAt(p);
-			if(c == '\\') break;
-			if(c == '/') break;
-			if(c == ArchiveDelimiter) break;
-			if(c == '.') {
-				// found extension delimiter
-				//int extlen = slen - p;
-				return name.substring( p );
-			}
-			p--;
-		}
-		// not found
-		return new String();
-	}
 	public static String extractStorageName( final String name ) {
 		// extract "name"'s storage name ( excluding path ) and return it.
 		final int slen = name.length();
@@ -203,7 +79,6 @@ public class Storage {
 			char c = name.charAt(p);
 			if(c == '\\') break;
 			if(c == '/') break;
-			if(c == ArchiveDelimiter) break;
 			p--;
 		}
 		p++;
@@ -212,40 +87,6 @@ public class Storage {
 		} else {
 			return name.substring(p);
 		}
-	}
-	public static String extractStoragePath( final String name ) {
-		// extract "name"'s path ( including last delimiter ) and return it.
-		final int slen = name.length();
-		int p = slen;
-		p--;
-		while( p >= 0 ) {
-			char c = name.charAt(p);
-			if( c == '\\' ) break;
-			if( c == '/' ) break;
-			if( c == ArchiveDelimiter ) break;
-			p--;
-		}
-		p++;
-		return name.substring(0,p);
-	}
-	public static String chopStorageExt(String name) {
-		// chop storage's extension and return it.
-		int slen = name.length();
-		int p = slen;
-		p--;
-		while( p >= 0 ) {
-			char c = name.charAt(p);
-			if( c == '\\' ) break;
-			if( c == '/' ) break;
-			if( c == ArchiveDelimiter) break;
-			if( c == '.' ) {
-				// found extension delimiter
-				return name.substring(0,p);
-			}
-			p--;
-		}
-		// not found
-		return name;
 	}
 
 	public static String searchPlacedPath( final String name ) throws TJSException {
@@ -261,103 +102,27 @@ public class Storage {
 	 * @throws TJSException
 	 */
 	public static String getPlacedPath( final String name ) throws TJSException {
-		return TVP.AutoPath.getPlacedPath(name);
+		if (!checkExistentLocalFile(name))
+		{
+			return new String();
+		}
+		return name;
 	}
 	public static boolean isExistentStorage( final String name ) throws TJSException {
-		String path = TVP.AutoPath.getPlacedPath(name);
-		return( path != null && path.length() > 0 );
+		return checkExistentLocalFile(name);
 	}
 
 	public static boolean isExistentStorageNoSearch(String name) throws TJSException {
-		return isExistentStorageNoSearchNoNormalize( TVP.StorageMediaManager.normalizeStorageName(name,null) );
+		return isExistentStorageNoSearchNoNormalize( name );
 	}
 
 	public static boolean isExistentStorageNoSearchNoNormalize( String name  ) throws TJSException {
-		// does name contain > ?
-		synchronized (TVP.CreateStreamCS) {
-			final int sharp_pos = name.indexOf( ArchiveDelimiter );
-			if( sharp_pos != -1 ) {
-				// this storagename indicates a file in an archive
-				String arcname = name.substring(0, sharp_pos);
-				Archive arc = TVP.ArchiveCache.get(arcname);
-				boolean ret;
-				try {
-					String in_arc_name = name.substring(sharp_pos + 1);
-					in_arc_name = Archive.normalizeInArchiveStorageName(in_arc_name);
-					ret = arc.isExistent(in_arc_name);
-				} finally {
-					arc = null;
-				}
-				return ret;
-			}
-
-			return TVP.StorageMediaManager.checkExistentStorage(name);
-		}
+		return checkExistentLocalFile(name);
 	}
 	public static BinaryStream createStream( final String _name, int flags ) throws TJSException {
-		try {
-			synchronized (TVP.CreateStreamCS) {
-				String name;
-				int access = flags & BinaryStream.ACCESS_MASK;
-				if( access == BinaryStream.WRITE )
-					name = TVP.StorageMediaManager.normalizeStorageName(_name,null);
-				else
-					name = TVP.AutoPath.getPlacedPath(_name); // file must exist
-
-				if( name == null || name.length() == 0 ) Message.throwExceptionMessage(Message.CannotOpenStorage, _name);
-
-				// does name contain > ?
-				int sharp_pos = name.indexOf(ArchiveDelimiter);
-				if( sharp_pos != -1 ) {
-					// this storagename indicates a file in an archive
-					if( access != BinaryStream.READ )
-						Message.throwExceptionMessage(Message.CannotWriteToArchive);
-
-					String arcname = name.substring( 0, sharp_pos );
-
-					Archive arc;
-					BinaryStream stream;
-					arc = TVP.ArchiveCache.get(arcname);
-					try {
-						String in_arc_name = name.substring(sharp_pos + 1);
-						in_arc_name = Archive.normalizeInArchiveStorageName(in_arc_name);
-						stream = arc.createStream(in_arc_name);
-					} finally {
-						arc = null;
-						if(access >= 1) clearStorageCaches();
-					}
-					return stream;
-				}
-
-				BinaryStream stream;
-				try {
-					stream = TVP.StorageMediaManager.open(name, flags);
-				} finally {
-					if(access >= 1) clearStorageCaches();
-				}
-				return stream;
-			}
-		} catch( TJSException e ) {
-			if( _name.indexOf('#') != -1 ) {
-				String tmp = Message.FilenameContainsSharpWarn.replace( "%1", _name );
-				StringBuilder builder = new StringBuilder(128);
-				builder.append(e.getMessage());
-				builder.append('[');
-				builder.append(tmp);
-				builder.append(']');
-				throw new TJSException(builder.toString());
-			}
-			throw e;
-		}
-	}
-	public static void clearStorageCaches() {
-		// clear all storage related caches
-		// TVPClearXP3SegmentCache(); TODO XP3 書いたら追加すること, キャッシングしていないので今のところ不要
-		TVP.AutoPath.clearAutoPathCache();
-	}
-	public static void setCurrentDirectory( final String _name ) throws TJSException {
-		TVP.StorageMediaManager.setCurrentDirectory(_name);
-		clearStorageCaches();
+		BinaryStream stream;
+		stream = new LocalFileStream( _name, _name, flags );
+		return stream;
 	}
 	public static String readText( String name, String modestr ) throws TJSException {
 		BinaryStream stream = null;
@@ -506,18 +271,6 @@ public class Storage {
 			}
 		}
 		return null;
-	}
-	static boolean checkExistentLocalFolder( final String name ) {
-		File file = new File(name);
-		if( file.exists() && file.isDirectory() )
-			return true;
-		else
-			return false;
-	}
-
-	public static boolean createFolders(String name) {
-		File newdir = new File(name);
-		return newdir.mkdir();
 	}
 
 }

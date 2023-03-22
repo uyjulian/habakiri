@@ -1,4 +1,3 @@
 
 rootProject.name = 'habakiri'
-include('JOrbis')
 include('desktop')

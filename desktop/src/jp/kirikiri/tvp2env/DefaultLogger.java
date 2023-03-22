@@ -39,13 +39,11 @@ public class DefaultLogger implements ConsoleOutput {
 	@Override
 	public void exceptionPrint(String msg) {
 		System.out.println(msg );
-		// Log.v( "Logger", message );	// for android
 	}
 
 	@Override
 	public void print(String msg) {
 		System.out.println(msg );
-		// Log.v( "Logger", message );	// for android
 	}
 
 }

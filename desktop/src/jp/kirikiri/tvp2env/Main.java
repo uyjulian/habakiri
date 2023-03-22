@@ -32,99 +32,79 @@
  */
 package jp.kirikiri.tvp2env;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.util.Iterator;
-import java.util.Properties;
+import java.util.Arrays;
 
+import jp.kirikiri.tjs2.BinaryStream;
+import jp.kirikiri.tjs2.CompileException;
+import jp.kirikiri.tjs2.ConsoleOutput;
+import jp.kirikiri.tjs2.Dispatch2;
+import jp.kirikiri.tjs2.Error;
+import jp.kirikiri.tjs2.TJS;
 import jp.kirikiri.tjs2.TJSException;
+import jp.kirikiri.tjs2.Variant;
 import jp.kirikiri.tjs2.VariantException;
-import jp.kirikiri.tvp2.TVP;
-import jp.kirikiri.tvp2.base.ScriptsClass;
-import jp.kirikiri.tvp2.base.SystemInitializer;
-import jp.kirikiri.tvp2.base.TVPSystem;
-import jp.kirikiri.tvp2.utils.DebugClass;
 
-class Main {
-	private static final String PROP_FILE_NAME = "engine.properties";
+import jp.kirikiri.tvp2.base.Storage;
+import jp.kirikiri.tvp2.base.StorageIO;
 
-	public static void main(String[] args) {
-		processArg( args );
-		loadProperties(PROP_FILE_NAME);
+public class Main {
+	static private TJS mScriptEngine;
+	public static ConsoleOutput ConsoleOutputGetway;
+	static private byte[] mHeaderTemp;
 
-		// dumpProperties();
-		try {
-			ApplicationSystem app = new ApplicationSystem(); // 自分でTVPに登録する
-			TVP.initialize();
-			ScriptsClass.initScriptEnging();
+	public static void main(String[] args) throws Exception {
+		mHeaderTemp = new byte[8];
 
-			// banner
-			DebugClass.addImportantLog( "Program started on " + TVPSystem.getOSName() );
-			DebugClass.addImportantLog( "JVM : " + TVPSystem.getJVMName() );
-			DebugClass.addImportantLog( "JRE : " + TVPSystem.getJREName() );
+		Storage.initialize();
 
-			SystemInitializer.systemInitialize();
-			ScriptsClass.initializeStartupScript();
-			EventHandleThread t = new EventHandleThread();
-			t.start();
-		} catch (VariantException e) {
-			TVP.DebugLog.onError();
-			e.printStackTrace();
-			ApplicationSystem.messageBox(e.getMessage(),"Error",0);
-		} catch (TJSException e) {
-			TVP.DebugLog.onError();
-			e.printStackTrace();
-			ApplicationSystem.messageBox(e.getMessage(),"Error",0);
-		} catch( Exception e ) {
-			TVP.DebugLog.onError();
-			e.printStackTrace();
-			ApplicationSystem.messageBox(e.getMessage(),"Error",0);
-		}
+		TJS.mStorage = new StorageIO();
+		TJS.initialize();
+		mScriptEngine = new TJS();
+
+		ConsoleOutputGetway = new DefaultLogger();
+		TJS.setConsoleOutput( ConsoleOutputGetway );
+
+		executeStorage(args[0],null,null,false,null);
 	}
-	private static void processArg( String[] args ) {
-		TVP.Properties = new Properties();
-		final int count = args.length;
-		for( int i = 0; i < count; i++ ) {
-			String arg = args[i];
-			if( arg.charAt(0) == '-' ) {
-				String name = arg.substring(1);
-				int index = name.indexOf('=');
-				if( index != -1 && name.length() > (index+1) ) {
-					String value = name.substring(index+1);
-					name = name.substring(0,index);
-					TVP.Properties.setProperty(name, value);
+
+	public static Dispatch2 getGlobal() {
+		return mScriptEngine.getGlobal();
+	}
+
+	public static void executeStorage( final String name, Dispatch2 context, Variant result, boolean isexpression, final String modestr ) throws TJSException, VariantException, CompileException {
+		if( mScriptEngine == null ) throw new TJSException( Error.InternalError );
+
+		if( true ) {
+			if( isexpression == false ) {
+				// ヘッダーチェック
+				String place = Storage.searchPlacedPath(name);
+				String shortname = Storage.extractStorageName(place);
+				BinaryStream stream = Storage.createStream( place, BinaryStream.READ );
+				int len = stream.read(mHeaderTemp);
+				if( len == 8 && Arrays.equals(mHeaderTemp, jp.kirikiri.tjs2.Compiler.FILE_TAG) ) {
+					stream.setPosition(0);
+					mScriptEngine.loadByteCode(result, context, shortname, stream );
+					return;
 				} else {
-					TVP.Properties.setProperty(name, "no value" );
+					// ヘッダーがバイナリのバイトコードでなくて読み替えもしないのならスクリプトとして読む
+					stream.setPosition(0);
+					String buffer = Storage.readText(stream,place,modestr);
+					if( buffer == null ) buffer = "";
+					mScriptEngine.execScript(buffer, result, context, shortname, 0 );
+					return;
 				}
 			}
 		}
-	}
-	private static void loadProperties( final String filename ) {
-		if( TVP.Properties == null ) TVP.Properties = new Properties();
-		try {
-			@SuppressWarnings("rawtypes")
-			Class c = TVP.class;
-			InputStream is = c.getResourceAsStream(filename);
-			if( is == null ) {
-				is = new FileInputStream(filename);
-			}
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			TVP.Properties.load(br);
-			br.close();
-			is.close();
-		} catch (IOException e) {
-		}
-	}
-	static void dumpProperties() {
-		for( @SuppressWarnings("rawtypes")
-		Iterator i = TVP.Properties.keySet().iterator(); i.hasNext();) {
-			String key = (String) i.next();
-			String val = TVP.Properties.getProperty(key);
-			System.out.println(key + "=" + val);
+
+		String place = Storage.searchPlacedPath(name);
+		String shortname = Storage.extractStorageName(place);
+		String buffer = Storage.readText(place,modestr);
+		if( buffer == null ) buffer = "";
+
+		if( isexpression == false ) {
+			mScriptEngine.execScript(buffer, result, context, shortname, 0 );
+		} else {
+			mScriptEngine.evalExpression( buffer, result, context, shortname, 0 );
 		}
 	}
 }
