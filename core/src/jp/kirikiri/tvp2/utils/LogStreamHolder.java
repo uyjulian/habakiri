@@ -83,7 +83,7 @@ public class LogStreamHolder {
 				mOpenFailed = true;
 			} else {
 				// no log location specified
-				filename = TVP.DebugLog.getNativeLogLocation() + "\\krkr.console.log";
+				filename = TVP.DebugLog.getNativeLogLocation() + File.separatorChar + "krkr.console.log";
 				SystemInitializer.ensureDataPathDirectory();
 
 				File file = new File(filename);
