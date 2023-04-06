@@ -165,7 +165,7 @@ public class FileMedia implements StorageMedia {
 			replaceCh = '/';
 		}
 		String pp = newname.toString();
-		return pp.replace( replaceCh, File.separatorChar );
+		return Storage.getCaseInsensitiveFile(pp.replace( replaceCh, File.separatorChar )).toString();
 	}
 
 	public String getLocalName( final String name ) throws TJSException {
