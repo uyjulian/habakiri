@@ -92,8 +92,7 @@ public class LogStreamHolder {
 					boolean appendbom = file.exists() == false;
 					mStream = new PrintWriter(new BufferedWriter(new FileWriter(file,append)));
 					if( mStream != null && appendbom ) {
-						mStream.write(0xff);
-						mStream.write(0xfe);
+						mStream.print("\uFEFF");
 					}
 				}
 				if(mStream==null) mOpenFailed = true;
